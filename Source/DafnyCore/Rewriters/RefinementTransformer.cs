@@ -404,8 +404,11 @@ namespace Microsoft.Dafny {
         Error(ErrorId.ref_mismatched_abstractness, nw,
           "an abstract type declaration ({0}) in a refining module cannot replace a more specific type declaration in the refinement base", nw.Name);
       } else if ((d is IndDatatypeDecl && nw is IndDatatypeDecl) || (d is CoDatatypeDecl && nw is CoDatatypeDecl)) {
+        // Refinement of existing ADT definitions
         var (dd, nwd) = ((DatatypeDecl)d, (DatatypeDecl)nw);
-        Contract.Assert(!nwd.Ctors.Any());
+        Contract.Assert(true);
+        // The new definition contains all constructors from the refined module,
+        // as well as any new constructors from the refining module.
         nwd.Ctors.AddRange(dd.Ctors.Select(refinementCloner.CloneCtor));
         nwPointer.Set(MergeClass((DatatypeDecl)nw, (DatatypeDecl)d));
       } else if (nw is DatatypeDecl) {

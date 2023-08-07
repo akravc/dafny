@@ -1363,9 +1363,7 @@ DatatypeDecl<DeclModifierData dmod, ModuleDefinition/*!*/ module, out DatatypeDe
   [ ExtendsClause<parentTraits, out _, co ? "codatatype" : "datatype"> ]
   (
   "="                                      (. bodyStart = t; .)
-  [ ellipsis                               (. SemErr(ErrorId.p_bad_datatype_refinement, t, // Help users adjust to the new syntax
-      $"in refining a datatype, the '...' replaces the '=' token and everything up to a left brace starting the declaration of the body; only members of the body may be changed in a datatype refinement"); .)
-  ]
+  [ ellipsis                               (. isRefining = true; bodyStart = t; .) ]                             
   [ "|" ] DatatypeMemberDecl<ctors>
   { "|" DatatypeMemberDecl<ctors> }
   | ellipsis                               (. isRefining = true; bodyStart = t; .)
