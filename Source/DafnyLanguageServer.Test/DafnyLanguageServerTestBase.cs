@@ -54,11 +54,12 @@ lemma {:neverVerify} HasNeverVerifyAttribute(p: nat, q: nat)
 
     public IProjectDatabase Projects => Server.GetRequiredService<IProjectDatabase>();
 
-    protected DafnyLanguageServerTestBase(ITestOutputHelper output) : base(new JsonRpcTestOptions(LoggerFactory.Create(
+    protected DafnyLanguageServerTestBase(ITestOutputHelper output, LogLevel dafnyLogLevel = LogLevel.Information)
+      : base(new JsonRpcTestOptions(LoggerFactory.Create(
       builder => {
         builder.AddFilter("OmniSharp.Extensions.JsonRpc", LogLevel.None);
         builder.AddFilter("OmniSharp", LogLevel.Warning);
-        builder.AddFilter("Microsoft.Dafny", LogLevel.Information);
+        builder.AddFilter("Microsoft.Dafny", dafnyLogLevel);
         builder.AddConsole();
       }))) {
       this.output = new WriterFromOutputHelper(output);
@@ -126,9 +127,10 @@ lemma {:neverVerify} HasNeverVerifyAttribute(p: nat, q: nat)
 
     protected static TextDocumentItem CreateTestDocument(string source, string filePath = null, int version = 1) {
       if (filePath == null) {
-        filePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName(), $"testFile{fileIndex++}.dfy");
+        var index = Interlocked.Increment(ref fileIndex);
+        filePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName(), $"testFile{index}.dfy");
       }
-      if (Path.GetDirectoryName(filePath) == null) {
+      if (string.IsNullOrEmpty(Path.GetDirectoryName(filePath))) {
         filePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName(), filePath);
       }
       filePath = Path.GetFullPath(filePath);
