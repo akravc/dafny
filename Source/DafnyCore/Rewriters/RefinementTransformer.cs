@@ -850,7 +850,23 @@ namespace Microsoft.Dafny {
               if (prevFunction.Body == null) {
                 replacementBody = f.Body;
               } else if (f.Body != null) {
-                Error(ErrorId.ref_mismatched_refinement_body, nwMember, $"a refining {f.WhatKind} is not allowed to extend/change the body");
+                // Refine pattern match expression body
+                if (prevFunction.Body is NestedMatchExpr && f.Body is NestedMatchExpr) {
+                  replacementBody = f.Body;
+                  var rB = (NestedMatchExpr) replacementBody;
+                  var pF = (NestedMatchExpr) prevFunction.Body;
+                  // optimize this?
+                  foreach (NestedMatchCaseExpr mc in rB.Cases) {
+                    foreach (NestedMatchCaseExpr mcOld in pF.Cases) {
+                      // Error handling for duplicate cases
+                      if (mc.Pat is IdPattern && mcOld.Pat is IdPattern && 
+                          ((IdPattern) mc.Pat).Id == ((IdPattern) mcOld.Pat).Id) {
+                        Error(ErrorId.ref_duplicate_pattern_detected, f.Body.Tok, "duplicate pattern detected");
+                      }
+                    }
+                  }
+                  rB.Cases.AddRange(pF.Cases.Select(refinementCloner.CloneNestedMatchCaseExpr));
+                }
               }
               var newF = CloneFunction(f, prevFunction, moreBody, replacementBody, prevFunction.Body == null, f.Attributes);
               newF.RefinementBase = member;
@@ -1407,9 +1423,27 @@ namespace Microsoft.Dafny {
       var sep = "";
       for (; j < oldStmt.Count; j++) {
         var b = oldStmt[j];
-        body.Add(refinementCloner.CloneStmt(b));
-        hoverText += sep + Printer.StatementToString(Reporter.Options, b);
-        sep = "\n";
+        if (b is NestedMatchStmt && body.Count > 0 && body[0] is NestedMatchStmt) {
+          // Combine top-level match statements here for lemma extension
+          var oldMatch = (NestedMatchStmt) b;
+          var newMatch = (NestedMatchStmt) body[0];
+          // optimize this?
+          foreach (NestedMatchCaseStmt mc in newMatch.Cases) {
+            foreach (NestedMatchCaseStmt mcOld in oldMatch.Cases) {
+              // Error handling for duplicate cases
+              if (mc.Pat is IdPattern && mcOld.Pat is IdPattern && 
+                  ((IdPattern) mc.Pat).Id == ((IdPattern) mcOld.Pat).Id) {
+                Error(ErrorId.ref_duplicate_pattern_detected, body[0].Tok, "duplicate pattern detected");
+              }
+            }
+          }
+          newMatch.Cases.AddRange(oldMatch.Cases.Select(refinementCloner.CloneNestedMatchCaseStmt));
+          hoverText += sep + Printer.StatementToString(Reporter.Options, newMatch);
+        } else {
+          body.Add(refinementCloner.CloneStmt(b));
+          hoverText += sep + Printer.StatementToString(Reporter.Options, b);
+        }
+          sep = "\n";
       }
       return body;
     }

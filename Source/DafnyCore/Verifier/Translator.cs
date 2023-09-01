@@ -7470,9 +7470,10 @@ namespace Microsoft.Dafny {
       Contract.Requires(condition != null);
       Contract.Ensures(Contract.Result<Bpl.PredicateCmd>() != null);
 
+      // Do not assume the assertions from a refined module
       if (assertAsAssume
-          || (assertionOnlyFilter != null && !assertionOnlyFilter(tok))
-          || (RefinementToken.IsInherited(refinesToken, currentModule) && (codeContext == null || !codeContext.MustReverify))) {
+          || (assertionOnlyFilter != null && !assertionOnlyFilter(tok))) {
+          //|| (RefinementToken.IsInherited(refinesToken, currentModule) && (codeContext == null || !codeContext.MustReverify))) {
         // produce an assume instead
         return TrAssumeCmd(tok, condition, kv);
       } else {

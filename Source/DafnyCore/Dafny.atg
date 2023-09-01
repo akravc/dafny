@@ -3570,6 +3570,7 @@ MatchStmt<out Statement/*!*/ s>
   "match"                     (. x = t; startToken = t; .)
   { Attribute<ref attrs> }
   Expression<out e, true, true>
+  [ellipsis]
   ( IF(la.kind == _lbrace)  /* always favor brace-enclosed match body to a case-less match */
     "{" (. usesOptionalBraces = true; .)
         { CaseStmt<out c> (. cases.Add(c); .) }
@@ -4748,6 +4749,7 @@ MatchExpression<out Expression e, bool allowLemma, bool allowLambda, bool allowB
   .)
   "match"                     (. x = t; .)
   Expression<out e, allowLemma, allowLambda, allowBitwiseOps>
+  [ ellipsis ]
   ( IF(la.kind == _lbrace)  /* always favor brace-enclosed match body to a case-less match */
     "{" (. usesOptionalBraces = true; .)
         { CaseExpression<out c, true, true, allowBitwiseOps> (. cases.Add(c); .) }
