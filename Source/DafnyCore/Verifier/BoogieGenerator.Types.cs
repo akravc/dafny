@@ -755,7 +755,7 @@ public partial class BoogieGenerator {
       yield return lit;
     }
 
-    var bounds = ModuleResolver.DiscoverAllBounds_SingleVar(x, expr);
+    var bounds = ModuleResolver.DiscoverAllBounds_SingleVar(x, expr, out _);
     foreach (var bound in bounds) {
       if (bound is ComprehensionExpr.IntBoundedPool) {
         var bnd = (ComprehensionExpr.IntBoundedPool)bound;
@@ -861,6 +861,9 @@ public partial class BoogieGenerator {
       // TODO: do better than just returning null
       return null;
     } else if (typ.IsAbstractType || typ.IsInternalTypeSynonym) {
+      return null;
+    } else if (typ.IsTraitType) {
+      Contract.Assert(options.Get(CommonOptionBag.GeneralTraits) != CommonOptionBag.GeneralTraitsOptions.Legacy);
       return null;
     } else {
       Contract.Assume(false);  // unexpected type
@@ -1153,6 +1156,8 @@ public partial class BoogieGenerator {
     } else if (fromType.IsTraitType) {
       // cast from a non-reference trait
       return UnboxIfBoxed(r, toType);
+    } else if (fromType.Equals(toType)) {
+      return r;
     } else {
       Contract.Assert(false, $"No translation implemented from {fromType} to {toType}");
     }
